@@ -16,7 +16,7 @@ df["hour"] = df["datetime"].dt.hour
 df["day"] = df["datetime"].dt.day
 df["month"] = df["datetime"].dt.month
 df["year"] = df["datetime"].dt.year
-df["dayofweek"] = df["datetime"].dt.dayofweek
+df["dayofweek"] = df["datetime"].dt.day_of_week
 
 # Remove target-leaking and unnecessary columns
 df = df.drop(columns=["casual", "registered", "datetime"])

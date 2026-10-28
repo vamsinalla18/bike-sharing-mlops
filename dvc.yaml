@@ -1,0 +1,27 @@
+stages:
+  prepare:
+    cmd: python src/prepare_data.py
+    deps:
+      - src/prepare_data.py
+      - data/raw/train.csv
+    outs:
+      - data/processed/X_train.csv
+      - data/processed/X_valid.csv
+      - data/processed/y_train.csv
+      - data/processed/y_valid.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/X_train.csv
+      - data/processed/X_valid.csv
+      - data/processed/y_train.csv
+      - data/processed/y_valid.csv
+    outs:
+      - models/LinearRegression.joblib
+      - models/RandomForest.joblib
+      - models/XGBoost.joblib
+    metrics:
+      - reports/baseline_results.csv:
+          cache: false
