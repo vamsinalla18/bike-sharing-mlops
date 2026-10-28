@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import mlflow
 
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
@@ -9,6 +10,8 @@ from xgboost import XGBRegressor
 import joblib
 from pathlib import Path
 
+
+# Directories
 DATA_DIR = Path("data/processed")
 MODEL_DIR = Path("models")
 RESULTS_DIR = Path("reports")
@@ -16,12 +19,19 @@ RESULTS_DIR = Path("reports")
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+
+# MLflow experiment setup
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_experiment("Bike Sharing Baseline Models")
+
+
 # Load prepared data
 X_train = pd.read_csv(DATA_DIR / "X_train.csv")
 X_valid = pd.read_csv(DATA_DIR / "X_valid.csv")
 
 y_train = pd.read_csv(DATA_DIR / "y_train.csv").squeeze("columns")
 y_valid = pd.read_csv(DATA_DIR / "y_valid.csv").squeeze("columns")
+
 
 # Define models
 models = {
@@ -47,42 +57,73 @@ models = {
     )
 }
 
+
 results = []
 
 for name, model in models.items():
+
     print(f"\nTraining {name}...")
 
-    model.fit(X_train, y_train)
+    with mlflow.start_run(run_name=name):
 
-    # Predict validation data
-    predictions = model.predict(X_valid)
+        # Train model
+        model.fit(X_train, y_train)
 
-    # Rental counts cannot be negative
-    predictions = np.maximum(predictions, 0)
+        # Predict validation data
+        predictions = model.predict(X_valid)
 
-    # Calculate evaluation metrics
-    rmse = root_mean_squared_error(y_valid, predictions)
+        # Rental counts cannot be negative
+        predictions = np.maximum(predictions, 0)
 
-    rmsle = np.sqrt(
-        mean_squared_log_error(y_valid, predictions)
-    )
+        # Calculate evaluation metrics
+        rmse = root_mean_squared_error(y_valid, predictions)
 
-    results.append({
-        "Model": name,
-        "RMSE": rmse,
-        "RMSLE": rmsle
-    })
+        rmsle = np.sqrt(
+            mean_squared_log_error(y_valid, predictions)
+        )
 
-    # Save the model
-    joblib.dump(model, MODEL_DIR / f"{name}.joblib")
+        # Log model parameters
+        mlflow.log_param("model_name", name)
 
-    print(f"RMSE:  {rmse:.4f}")
-    print(f"RMSLE: {rmsle:.4f}")
+        parameters = {
+            key: str(value)
+            for key, value in model.get_params().items()
+        }
+        mlflow.log_params(parameters)
+
+        # Log evaluation metrics
+        mlflow.log_metric("RMSE", float(rmse))
+        mlflow.log_metric("RMSLE", float(rmsle))
+
+        # Save model locally
+        model_path = MODEL_DIR / f"{name}.joblib"
+        joblib.dump(model, model_path)
+
+        # Log saved model as an MLflow artifact
+        mlflow.log_artifact(str(model_path), artifact_path="models")
+
+        # Collect results
+        results.append({
+            "Model": name,
+            "RMSE": rmse,
+            "RMSLE": rmsle
+        })
+
+        print(f"RMSE:  {rmse:.4f}")
+        print(f"RMSLE: {rmsle:.4f}")
+
 
 # Sort models by RMSLE
 results_df = pd.DataFrame(results).sort_values("RMSLE")
 
-results_df.to_csv(RESULTS_DIR / "baseline_results.csv", index=False)
+# Save results locally
+results_path = RESULTS_DIR / "baseline_results.csv"
+results_df.to_csv(results_path, index=False)
+
+# Log comparison report to MLflow
+with mlflow.start_run(run_name="Model Comparison Report"):
+    mlflow.log_artifact(str(results_path), artifact_path="reports")
+
 
 print("\n--- Final Model Comparison ---")
 print(results_df.to_string(index=False))
