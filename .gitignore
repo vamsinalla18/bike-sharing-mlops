@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Mac
+.DS_Store
+
+# Data and model artifacts
+# Ignore raw data files, but allow DVC metadata
+data/raw/*
+!data/raw/*.dvc
+
+# Ignore processed data files
+data/processed/*
+!data/processed/*.dvc
+models/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Secrets
+.env
