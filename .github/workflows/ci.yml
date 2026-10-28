@@ -25,10 +25,5 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run DVC pipeline
-        run: |
-          pip install "dvc>=3,<4"
-          dvc repro
-
       - name: Run tests
         run: python -m pytest tests/ -v

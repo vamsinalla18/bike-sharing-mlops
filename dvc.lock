@@ -9,8 +9,8 @@ stages:
       size: 648353
     - path: src/prepare_data.py
       hash: md5
-      md5: 6462f2d30e46ed49e8253b6bde07c86e
-      size: 1555
+      md5: f8a8c134d529214dcba0b5aaea5cd979
+      size: 1731
     outs:
     - path: data/processed/X_train.csv
       hash: md5
