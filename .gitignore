@@ -23,3 +23,7 @@ mlflow.db
 
 # Secrets
 .env
+
+# Full source dataset (tracked by DVC, never by git)
+data/source/*
+!data/source/*.dvc

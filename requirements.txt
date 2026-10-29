@@ -115,3 +115,4 @@ wcwidth==0.9.4
 xgboost==3.4.1
 yarl==1.25.1
 zc.lockfile==4.0
+mlflow

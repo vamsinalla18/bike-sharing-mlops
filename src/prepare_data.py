@@ -1,7 +1,8 @@
 import pandas as pd
 from pathlib import Path
 
-RAW_PATH = "data/raw/train.csv"
+from src.common import load_params
+
 PROCESSED_DIR = Path("data/processed")
 
 
@@ -30,24 +31,26 @@ def prepare_features(df):
     return X, y
 
 
+def split_chronological(X, y, train_fraction):
+    """Chronological split (no shuffling, so validation is strictly later)."""
+    split_index = int(len(X) * train_fraction)
+    return (
+        X.iloc[:split_index], X.iloc[split_index:],
+        y.iloc[:split_index], y.iloc[split_index:],
+    )
+
+
 def main():
+    params = load_params()
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Load raw dataset
-    df = pd.read_csv(RAW_PATH)
-
-    # Prepare features
+    df = pd.read_csv(params["data"]["raw_path"])
     X, y = prepare_features(df)
 
-    # Chronological 80/20 split
-    split_index = int(len(X) * 0.8)
+    X_train, X_valid, y_train, y_valid = split_chronological(
+        X, y, params["prepare"]["train_fraction"]
+    )
 
-    X_train = X.iloc[:split_index]
-    X_valid = X.iloc[split_index:]
-    y_train = y.iloc[:split_index]
-    y_valid = y.iloc[split_index:]
-
-    # Save datasets
     X_train.to_csv(PROCESSED_DIR / "X_train.csv", index=False)
     X_valid.to_csv(PROCESSED_DIR / "X_valid.csv", index=False)
     y_train.to_csv(PROCESSED_DIR / "y_train.csv", index=False)

@@ -1,9 +1,27 @@
 stages:
+  validate:
+    cmd: python -m src.validate_data
+    deps:
+      - src/validate_data.py
+      - src/common.py
+      - data/raw/train.csv
+    params:
+      - data.raw_path
+      - data.stats_path
+    metrics:
+      - reports/data_stats.json:
+          cache: false
+
   prepare:
-    cmd: python src/prepare_data.py
+    cmd: python -m src.prepare_data
     deps:
       - src/prepare_data.py
+      - src/common.py
       - data/raw/train.csv
+      - reports/data_stats.json   # makes `validate` run first; bad data stops the pipeline
+    params:
+      - data.raw_path
+      - prepare.train_fraction
     outs:
       - data/processed/X_train.csv
       - data/processed/X_valid.csv
@@ -11,17 +29,24 @@ stages:
       - data/processed/y_valid.csv
 
   train:
-    cmd: python src/train.py
+    cmd: python -m src.train
     deps:
       - src/train.py
+      - src/common.py
       - data/processed/X_train.csv
       - data/processed/X_valid.csv
       - data/processed/y_train.csv
       - data/processed/y_valid.csv
+      - data/raw/train.csv
+      - reports/data_stats.json
+    params:
+      - train
     outs:
       - models/LinearRegression.joblib
       - models/RandomForest.joblib
       - models/XGBoost.joblib
-    metrics:
       - reports/baseline_results.csv:
+          cache: false
+    metrics:
+      - reports/metrics.json:
           cache: false
