@@ -1,0 +1,138 @@
+schema: '2.0'
+stages:
+  validate:
+    cmd: python -m src.validate_data
+    deps:
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 2219249bc86a065cdadae737a7e3033d
+      size: 648353
+    - path: src/common.py
+      hash: md5
+      md5: b47900fc17362bdac2d1fae8487ed0a4
+      size: 528
+    - path: src/validate_data.py
+      hash: md5
+      md5: f69deaa68deb805708d97a6aa8b98841
+      size: 1981
+    params:
+      params.yaml:
+        data.raw_path: data/raw/train.csv
+        data.stats_path: reports/data_stats.json
+    outs:
+    - path: reports/data_stats.json
+      hash: md5
+      md5: 5fe5335c9a2f193fa27af86df4432983
+      size: 140
+  prepare:
+    cmd: python -m src.prepare_data
+    deps:
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 2219249bc86a065cdadae737a7e3033d
+      size: 648353
+    - path: reports/data_stats.json
+      hash: md5
+      md5: 5fe5335c9a2f193fa27af86df4432983
+      size: 140
+    - path: src/common.py
+      hash: md5
+      md5: b47900fc17362bdac2d1fae8487ed0a4
+      size: 528
+    - path: src/prepare_data.py
+      hash: md5
+      md5: ec34b851545f11b8929add47da970cd4
+      size: 1920
+    params:
+      params.yaml:
+        data.raw_path: data/raw/train.csv
+        prepare.train_fraction: 0.8
+    outs:
+    - path: data/processed/X_train.csv
+      hash: md5
+      md5: bc96a244b8ff84983a650bc05cccf8da
+      size: 387342
+    - path: data/processed/X_valid.csv
+      hash: md5
+      md5: e98c70841c14160f13e9dd9d279032bd
+      size: 98265
+    - path: data/processed/y_train.csv
+      hash: md5
+      md5: caaec1036826299042f5392f204772b7
+      size: 30165
+    - path: data/processed/y_valid.csv
+      hash: md5
+      md5: 841aba5460550f8354ec9d16b8fd6cd1
+      size: 7945
+  train:
+    cmd: python -m src.train
+    deps:
+    - path: data/processed/X_train.csv
+      hash: md5
+      md5: bc96a244b8ff84983a650bc05cccf8da
+      size: 387342
+    - path: data/processed/X_valid.csv
+      hash: md5
+      md5: e98c70841c14160f13e9dd9d279032bd
+      size: 98265
+    - path: data/processed/y_train.csv
+      hash: md5
+      md5: caaec1036826299042f5392f204772b7
+      size: 30165
+    - path: data/processed/y_valid.csv
+      hash: md5
+      md5: 841aba5460550f8354ec9d16b8fd6cd1
+      size: 7945
+    - path: data/raw/train.csv
+      hash: md5
+      md5: 2219249bc86a065cdadae737a7e3033d
+      size: 648353
+    - path: reports/data_stats.json
+      hash: md5
+      md5: 5fe5335c9a2f193fa27af86df4432983
+      size: 140
+    - path: src/common.py
+      hash: md5
+      md5: b47900fc17362bdac2d1fae8487ed0a4
+      size: 528
+    - path: src/train.py
+      hash: md5
+      md5: 99ec8d9ce0dd28e6e840821212cb567c
+      size: 3860
+    params:
+      params.yaml:
+        train:
+          random_state: 42
+          models:
+            LinearRegression: {}
+            RandomForest:
+              n_estimators: 200
+              max_depth: 20
+              min_samples_leaf: 2
+            XGBoost:
+              n_estimators: 300
+              max_depth: 7
+              learning_rate: 0.05
+              subsample: 0.8
+              colsample_bytree: 0.8
+    outs:
+    - path: models/LinearRegression.joblib
+      hash: md5
+      md5: 44de79ae2d581709dc56a3158f7b864a
+      size: 1199
+    - path: models/RandomForest.joblib
+      hash: md5
+      md5: e6d1384d24c91a8299cb418bc35c0fca
+      size: 67209009
+    - path: models/XGBoost.joblib
+      hash: md5
+      md5: ba687ceb90c3cb295defc529f8f7c8e1
+      size: 2247937
+    - path: reports/baseline_results.csv
+      hash: md5
+      md5: e678460a5043feca34322ebaff4bd740
+      size: 166
+    - path: reports/metrics.json
+      hash: md5
+      md5: b10cea2df09f992cc3eb5211902dd581
+      size: 344
