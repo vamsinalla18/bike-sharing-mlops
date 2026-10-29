@@ -172,3 +172,6 @@ use persistent claims (`2Gi` and `1Gi`); adjust them for your cluster. This
 deployment runs one API replica because Prometheus scrapes the API Service as
 a single target. To scale the API, change the scrape configuration to discover
 and scrape each pod.
+
+[Watch the Kubernetes end-to-end demo](docs/kubernetes-demo.mp4). It uses the
+synthetic demo model described above.
