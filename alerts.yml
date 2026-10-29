@@ -1,0 +1,11 @@
+groups:
+  - name: bike_prediction_alerts
+    rules:
+      - alert: HighPredictionRequestVolume
+        expr: sum(increase(prediction_requests_total[5m])) > 25
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: More than 25 prediction requests in five minutes
+          description: The prediction API received more than 25 requests during the last five minutes.

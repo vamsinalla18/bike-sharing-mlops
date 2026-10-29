@@ -63,3 +63,41 @@ compare with `dvc params diff` / `dvc metrics diff`. Every MLflow run is tagged 
 ## Tests / CI
 `python -m pytest tests/` covers feature engineering, data slicing (versions must be strict
 prefixes of each other), validation rules and param-driven model building. CI also runs `dvc dag`.
+
+## Run the API, frontend, and Prometheus with Docker
+
+Build and start everything:
+
+```bash
+docker compose up --build
+```
+
+The image installs only `requirements.docker.txt`, a small runtime dependency
+list; the larger `requirements.txt` remains available for local pipeline/DVC work.
+
+Open the Streamlit frontend at http://localhost:8501 and select **Generate 10 data
+points and predictions**. The button generates 10 valid randomized inputs and sends
+10 individual `POST /predict` requests to the API.
+
+Open Prometheus at http://localhost:9090. Useful queries are:
+
+```promql
+prediction_requests_total
+sum(rate(http_request_duration_seconds_count[1m]))
+prediction_request_duration_seconds_bucket
+```
+
+Prometheus exposes a `HighPredictionRequestVolume` alert at
+http://localhost:9090/alerts when more than 25 prediction requests arrive in five
+minutes. After starting the stack, wait at least one 5-second scrape interval
+before generating traffic so Prometheus records the initial counter value.
+
+The raw API metrics are also available at http://localhost:8001/metrics. To test the
+container without the frontend, in a second terminal run:
+
+```bash
+curl http://localhost:8001/health
+curl http://localhost:8001/metrics | grep prediction
+```
+
+Stop the stack with `docker compose down`.
