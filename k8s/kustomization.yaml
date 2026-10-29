@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: bike-sharing
+resources:
+  - namespace.yaml
+  - workloads.yaml
+configMapGenerator:
+  - name: prometheus-config
+    files:
+      - prometheus.yml
+      - alerts.yml
+  - name: grafana-datasource
+    files:
+      - grafana-datasource.yml
+  - name: grafana-dashboard-provider
+    files:
+      - grafana-dashboard-provider.yml
+  - name: grafana-dashboard
+    files:
+      - bike-sharing-dashboard.json

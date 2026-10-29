@@ -64,13 +64,42 @@ compare with `dvc params diff` / `dvc metrics diff`. Every MLflow run is tagged 
 `python -m pytest tests/` covers feature engineering, data slicing (versions must be strict
 prefixes of each other), validation rules and param-driven model building. CI also runs `dvc dag`.
 
-## Run the API, frontend, and Prometheus with Docker
+## Prepare the serving image
+
+The API loads `models/RandomForest.joblib` at startup. This file is not tracked
+by Git. Restore it with DVC if you have access to its remote, or put a
+compatible training CSV at `data/raw/train.csv` and run:
+
+```bash
+pip install -r requirements.txt
+dvc repro
+```
+
+The checked-in DVC remote points to an absolute path on the original author's
+machine. A fresh clone must reconfigure that remote or provide the training
+data. For an infrastructure-only demo without real data, run:
+
+```bash
+pip install -r requirements.docker.txt
+python -m scripts.train_demo_model
+```
+
+This creates a model trained on synthetic data. Its predictions are not real
+bike-demand estimates. The Docker build fails if
+`models/RandomForest.joblib` is missing.
+
+## Run with Docker Compose
 
 Build and start everything:
 
 ```bash
+export GRAFANA_ADMIN_PASSWORD='choose-a-password'
 docker compose up --build
 ```
+
+If these host ports are occupied, set `API_PORT`, `FRONTEND_PORT`,
+`PROMETHEUS_PORT`, or `GRAFANA_PORT` before starting Compose. Container-to-container
+addresses stay unchanged.
 
 The image installs only `requirements.docker.txt`, a small runtime dependency
 list; the larger `requirements.txt` remains available for local pipeline/DVC work.
@@ -100,4 +129,46 @@ curl http://localhost:8001/health
 curl http://localhost:8001/metrics | grep prediction
 ```
 
-Stop the stack with `docker compose down`.
+Open Grafana at http://localhost:3000, log in as `admin` with the password
+above, and open **Dashboards → Bike Sharing → Bike Sharing API**. The Prometheus
+data source and dashboard load automatically. Stop with `docker compose down`.
+
+## Run on Kubernetes
+
+Requires `kubectl`, a cluster with a default StorageClass, and an image
+containing the trained model. For a local kind cluster:
+
+```bash
+docker build -t bike-sharing:local .
+kind load docker-image bike-sharing:local
+kubectl apply -f k8s/namespace.yaml
+export GRAFANA_ADMIN_PASSWORD='choose-a-password'
+kubectl -n bike-sharing create secret generic grafana-admin \
+  --from-literal=password="$GRAFANA_ADMIN_PASSWORD"
+kubectl apply -k k8s/
+kubectl -n bike-sharing rollout status deployment/api
+kubectl -n bike-sharing rollout status deployment/frontend
+kubectl -n bike-sharing rollout status deployment/prometheus
+kubectl -n bike-sharing rollout status deployment/grafana
+```
+
+For another cluster, push the image to a registry and replace
+`bike-sharing:local` in both deployments with its full registry name and
+immutable tag. With minikube, use `minikube image load bike-sharing:local` in
+place of the kind load command.
+
+In separate terminals, forward the three user interfaces:
+
+```bash
+kubectl -n bike-sharing port-forward svc/frontend 8501:8501
+kubectl -n bike-sharing port-forward svc/prometheus 9090:9090
+kubectl -n bike-sharing port-forward svc/grafana 3000:3000
+```
+
+Open the same local URLs as above. The Prometheus dashboard shows API
+availability, request rates, and prediction latency. Generate requests from
+the frontend and wait for the 5-second scrape interval. Prometheus and Grafana
+use persistent claims (`2Gi` and `1Gi`); adjust them for your cluster. This
+deployment runs one API replica because Prometheus scrapes the API Service as
+a single target. To scale the API, change the scrape configuration to discover
+and scrape each pod.
