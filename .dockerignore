@@ -1,0 +1,12 @@
+.git
+.dvc
+.pytest_cache
+__pycache__
+*.py[cod]
+mlruns
+mlflow.db
+data
+reports
+tests
+README.md
+requirements.txt

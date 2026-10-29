@@ -1,0 +1,11 @@
+# Runtime dependencies only. Keep Docker images small and avoid installing
+# development/pipeline tooling such as DVC and MLflow.
+fastapi
+uvicorn[standard]
+joblib
+pandas
+scikit-learn
+streamlit
+requests
+prometheus-client
+prometheus-fastapi-instrumentator

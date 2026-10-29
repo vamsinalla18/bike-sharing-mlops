@@ -1,0 +1,43 @@
+services:
+  api:
+    build: .
+    ports:
+      - "${API_PORT:-8001}:8001"
+
+  frontend:
+    build: .
+    command: streamlit run app.py --server.address 0.0.0.0 --server.port 8501
+    ports:
+      - "${FRONTEND_PORT:-8501}:8501"
+    environment:
+      API_URL: http://api:8001/predict
+    depends_on:
+      - api
+
+  prometheus:
+    image: prom/prometheus:v3.6.0
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./k8s/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./k8s/alerts.yml:/etc/prometheus/alerts.yml:ro
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env or environment}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./k8s/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - ./k8s/grafana-dashboard-provider.yml:/etc/grafana/provisioning/dashboards/bike-sharing.yml:ro
+      - ./k8s/bike-sharing-dashboard.json:/var/lib/grafana/dashboards/bike-sharing.json:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:
