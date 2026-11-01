@@ -175,3 +175,39 @@ and scrape each pod.
 
 [Watch the Kubernetes end-to-end demo](docs/kubernetes-demo.mp4). It uses the
 synthetic demo model described above.
+
+## Machine-Specific Paths: Jenkins and DVC
+
+Update these paths to match your own machine before running the pipeline.
+
+### Jenkins
+
+In `Jenkinsfile`, change the following values:
+
+```groovy
+environment {
+    PYTHON = '/path/to/your/python3.12'
+    PROJECT_DIR = '/path/to/your/bike-sharing-mlops'
+}
+```
+
+- Set `PYTHON` to the full path of the Python 3.12 executable installed on your machine.
+- Set `PROJECT_DIR` to the absolute path of your local project directory.
+
+The Jenkins pipeline uses `PROJECT_DIR` to copy the project files into the Jenkins workspace, so make sure it points to the correct directory.
+
+### DVC remote storage
+
+In `.dvc/config`, update the `url` for the `localstore` remote to the directory where your DVC storage is located:
+
+```ini
+[core]
+    remote = localstore
+['remote "localstore"']
+    url = /path/to/your/dvc-storage/bike-sharing
+```
+
+Replace the example path with your actual DVC storage path. The currently configured path is specific to the original development machine and will not work on every computer.
+
+If you use a shared remote such as Google Drive or S3 instead, configure the appropriate DVC remote and ensure that your credentials and data are available before running `dvc pull` or `dvc push`.
+
