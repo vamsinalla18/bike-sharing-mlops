@@ -195,3 +195,5 @@ kubectl -n bike-sharing port-forward svc/grafana 3000:3000
 The monitoring dashboard displays API availability, request rates, and prediction latency.
 
 [Watch the Kubernetes end-to-end demo](https://github.com/vamsinalla18/bike-sharing-mlops/blob/main/docs/kubernetes-demo.mp4). It uses the synthetic demo model described above.
+
+[Watch the Kubernetes, Prometheus & Grafana demo](https://github.com/vamsinalla18/bike-sharing-mlops/blob/main/docs/kubernetes_prometheus_grafana.mp4).
